@@ -8,7 +8,7 @@ It comprises of two basic mechanisms
  - Connection mechanism
  - Messaging mechanism
 
- ## Actors
+## Actors
 
  ### Client-server
  A client initiates a connection.<br>
@@ -27,7 +27,7 @@ It comprises of two basic mechanisms
  It consists of 4 portions
 
   - **COMMAND** - An upper-cased command which identifies the type of the message frame
-  - **Headers** - List of key-value paires delimited by colon (:) which carry crucial information of the connection and the frame
+  - **Headers** - List of key-value paires delimited by double colon (::) which carry crucial information of the connection and the frame
   - **Body** - Message frame Body
   - **null** - optional Null byte marking end of the message (not the message frame)
 
@@ -38,8 +38,8 @@ It comprises of two basic mechanisms
 *This is a valid frame*
 
     COMMAND
-    header-key1:headerValue1
-    header-key2:headerValue2
+    header-key1::headerValue1
+    header-key2::headerValue2
 
     bodybodybodybody
     bodybodybodybody
@@ -49,14 +49,14 @@ It comprises of two basic mechanisms
 *Although useless, this is also a valid frame*
 
     COMMAND
-    header-key:headerValue
+    header-key::headerValue
 
     ^@
 
 *This is also a valid frame just that the message is not complete yet*
 
     COMMAND
-    header-key:headerValue
+    header-key::headerValue
 
     bodybodybodybody
     bodybodybodybody
@@ -76,6 +76,7 @@ Valid commands are:
  - **DISCONNECT** issued by client
  - **DISCONNECTING** issued by server
  - **MESSAGE** issued by both server and clients
+ - **ERROR** to transmit any errors
 
 #### Headers
 Valid headers are listed in the below table. Rules and restrictions can be observed while examining the individual commands
@@ -98,8 +99,8 @@ Connection initiation happens only from client
 *Client*
 
         CONNECT
-        client-id:23450-678-aedc
-        client-passcode:Password@123
+        client-id::23450-678-aedc
+        client-passcode::Password@123
 
         ^@
  NOTES:
@@ -109,8 +110,8 @@ Connection initiation happens only from client
 *Server*
 
         CONNECTED
-        session-id:NaTPOgp1QUuB6Gm5tAdcSw
-        session-expiry:Tue, 01 Jun 2017 21:47:38 GMT
+        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        session-expiry::Tue, 01 Jun 2017 21:47:38 GMT
 NOTES:
  - session-id can be anything unqiue that an active server could generate to identify a connection session. This is a named alias for client connection handler
  - session-id is a mandatory header on all commands except `CONNECT`
@@ -125,7 +126,7 @@ Client can request server to gracefully terminate the session
 *Client*
 
         DISCONNECT
-        session-id:35a4cf3a-0a75-414b-81e8-69b9b4075c4b
+        session-id::35a4cf3a-0a75-414b-81e8-69b9b4075c4b
 
 NOTES:
  - session-id is passed to request Server to disconnect the client
@@ -137,7 +138,7 @@ NOTES:
  *Client* / *Server*
 
         DISCONNECTING
-        session-id:abcdef123456@#
+        session-id::abcdef123456@#
 
  NOTES:
   - This could be an ugly termination of connection
@@ -158,15 +159,15 @@ There are 2 flavors of messaging
 **Messsags can span across multiple message frames**<br>
 **Maximum message-size should be implemented by server to limit the size of the message**
 
-### MEssaging types
+### Messaging types
 
 Sending a response:
 
 *Peer*
 
         MESSAGE
-        session-id:NaTPOgp1QUuB6Gm5tAdcSw
-        msg-id:000001
+        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        msg-id::000001
 
         Hola
 
@@ -175,8 +176,8 @@ Sending a response:
 *Other peer*
 
         MESSAGE
-        session-id:NaTPOgp1QUuB6Gm5tAdcSw
-        ref-msg-id:000001
+        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ref-msg-id::000001
 
         Mundo!!!
 
@@ -187,8 +188,8 @@ Sending an acknowledgement is no different than sending a response
 *Peer*
 
         MESSAGE
-        session-id:NaTPOgp1QUuB6Gm5tAdcSw
-        msg-id:123123
+        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        msg-id::123123
 
         Hello
 
@@ -197,8 +198,8 @@ Sending an acknowledgement is no different than sending a response
 *Other peer*
 
         MESSAGE
-        session-id:NaTPOgp1QUuB6Gm5tAdcSw
-        ref-msg-id:123123
+        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ref-msg-id::123123
 
         OK
 
@@ -209,9 +210,9 @@ Send-only messages
 *Client/Server*
 
         MESSAGE
-        session-id:NaTPOgp1QUuB6Gm5tAdcSw
-        msg-id:888999
-        send-only:yes
+        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        msg-id::888999
+        send-only::yes
 
         OK
 
@@ -234,18 +235,18 @@ reaching the message size limit marks the end of the message
 
 *Frame1*
         MESSAGE
-        session-id:NaTPOgp1QUuB6Gm5tAdcSw
-        msg-id:123456
-        msg-more:yes
+        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        msg-id::123456
+        msg-more::yes
 
         This is first part of the message. Second
         part 
 
 *Frame2*
         MESSAGE
-        session-id:NaTPOgp1QUuB6Gm5tAdcSw
-        msg-id:123456
-        msg-more:yes
+        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        msg-id::123456
+        msg-more::yes
 
         is on the way. See I can have ^@ within the
         message but shouldn't precede with two CR-LFs.
@@ -253,8 +254,8 @@ reaching the message size limit marks the end of the message
 
 *Frame3*
         MESSAGE
-        session-id:NaTPOgp1QUuB6Gm5tAdcSw
-        msg-id:123456
+        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        msg-id::123456
 
         part marks the end of the
         message
@@ -283,15 +284,15 @@ The size includes all the command, headers, body and the null sections of every 
 In this size limit case, the message that is formed by the peer from the above example looks like 
 
     MESSAGE
-    session-id:NaTPOgp1QUuB6Gm5tAdcSw
-    msg-id:123456
-    msg-more:yes
+    session-id::NaTPOgp1QUuB6Gm5tAdcSw
+    msg-id::123456
+    msg-more::yes
 
     This is first part of the message. Second
     part MESSAGE
-    session-id:NaTPOgp1QUuB6Gm5tAdcSw
-    msg-id:123456
-    msg-more:yes
+    session-id::NaTPOgp1QUuB6Gm5tAdcSw
+    msg-id::123456
+    msg-more::yes
 
     is on the way. See I can have ^@ within the
     message but shouldn't precede with two CR-LFs.
@@ -304,3 +305,63 @@ So, the message body that is formed is as follows:
     message but shouldn't precede with two CR-LFs.
     Finally t
 
+#### Error message frames
+
+Error messages are special frames to communicate errors.<br> 
+Unlike regular messages, the errror messages should be sent in a single frame
+
+*Example*
+
+        ERROR
+        error-code::403
+
+        Access Forbidden
+
+        ^@
+
+NOTES:
+ - There are no specific rules for the headers or message body incase of error frames.
+ - One way is to send the error-code in header and the error description as part of body.
+
+## Rules in a nut-shell
+
+**Command Rules**
+1. Valid commands are `CONNECT` , `CONNECTED` , `DISCONNECT` , `DISCONNECTING` , `MESSAGE` , `ERROR`
+2. Only clients can issue `CONNECT` and only servers can issue `CONNECTED`
+3. Only clients can issue `DISCONNECT` but both client and server can issue `DISCONNECTING`
+4. Both client and server can send messages using `MESSAGE` command 
+5. Although uncommon for clients to send, both client and server can send Error messages using `ERROR` command
+
+**Header Rules**
+1. Valid headers which are reserved (cannot be used otherwise) are
+  - client-id
+  - client-passcode
+  - session-id
+  - session-expiry
+  - msg-id
+  - ref-msg-id
+  - send-only
+  - msg-more
+  - error-code
+2. `client-id` is mandatory on `CONNECT` command. Should represent the client identity
+3. `client-passcode` is optional on `CONNECT` command. Should be used for authentication alogn with `client-id`
+4. `session-id` is mandatory on all commands except `CONNECT`. Should be first populated as part of `CONNETED` command 
+5. `session-expiry` is an optional header returned on `CONNECTED` command. Represents the *upto* session validty time
+6. `msg-id` is mandatory header on `MESSAGE` command unless there is a `ref-msg-id` header. 
+It represents the unique id of the message in a session to communicate asynchronously.
+In case of multi-framed message scenario, this identifier is also used to concatenate the message frame bodies to form a single message body.
+7. `ref-msg-id` is mandatory header on `MESSAGE` command unless there is a `msg-id`. 
+It represents a response to the message sent with id `msg-id`
+In case of multi-framed message (response) scenario, this identifier is also used to concatenate the message frame bodies to form a single message body.
+8. `send-only` is an optional header on `MESSAGE` command which represents that the message is send-only and no response is expected.
+In case of multi-framed message with message-id, it is sufficient to have `send-only` populated on the first frame.
+It can have value `yes` to reprsent sendonly message. All other values represent *no*
+9. `msg-more` is an optinal header on `MESSAGE` command which conveys the peer that there are more message frames being sent as part of single message
+It can havge a value `yes` . All other values represent `no`
+10. `error-code` is an optional *conventional* header that should only be transmitted on `ERROR` commands. 
+It represents the an error. If it is an error on a specific message, a `message-id` could be accompanied with.
+But it is purely upto the implementer.
+
+**Encoding rules**
+1. All the messages should be encoded in *UTF-8* encoding
+2. Headers cannot have `::` in their values
