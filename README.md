@@ -326,6 +326,7 @@ NOTES:
 ## Rules in a nut-shell
 
 **Command Rules**
+
 1. Valid commands are `CONNECT` , `CONNECTED` , `DISCONNECT` , `DISCONNECTING` , `MESSAGE` , `ERROR`
 2. Only clients can issue `CONNECT` and only servers can issue `CONNECTED`
 3. Only clients can issue `DISCONNECT` but both client and server can issue `DISCONNECTING`
@@ -333,6 +334,7 @@ NOTES:
 5. Although uncommon for clients to send, both client and server can send Error messages using `ERROR` command
 
 **Header Rules**
+
 1. Valid headers which are reserved (cannot be used otherwise) are
   - client-id
   - client-passcode
@@ -363,5 +365,6 @@ It represents the an error. If it is an error on a specific message, a `message-
 But it is purely upto the implementer.
 
 **Encoding rules**
+
 1. All the messages should be encoded in *UTF-8* encoding
 2. Headers cannot have `::` in their values
