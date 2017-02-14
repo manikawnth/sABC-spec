@@ -20,54 +20,50 @@ It comprises of two basic mechanisms
  A message is just one or more **message frames**<br>
  Messages have restrictions imposed by server:
   - Each message is limited by its size (command + header + body + null) crossing which the server should truncate and mark end of the message<br>
-    In short, the null message frame portion (`\r\n\r\n\x00`) or size limit which ever is met first should markt the end of message
+    In short, the null message frame portion (`<delimiter>\x00`) or size limit which ever is met first should markt the end of message
 
  ### Message Frame
  A messsage frame is one frame sent on the network by using underlying protocol like TCP or web-sockets.<br>
- It consists of 4 portions
+ It consists of 4 sections
 
   - **COMMAND** - An upper-cased command which identifies the type of the message frame
   - **Headers** - List of key-value paires delimited by double colon (::) which carry crucial information of the connection and the frame
   - **Body** - Message frame Body
   - **null** - optional Null byte marking end of the message (not the message frame)
 
-  Command and Headers are separated by one CR-LF (`\r\n`).<br>
-  Headers and body are separated by two CR-LFs (`\r\n\r\n`).<br>
-  null preceded by two CR-LFs mark end of the message.
+  **Each section needs to be delimited by any chosen section delimiter**<br>
+  For the sake of examples, we are going to use the delimiter newline + ascii-paragraph (`\n¶`)
+  which translates to `\x0A\xB6`<br>
+  Each header within the header section are delimited by `\n`
+
 
 *This is a valid frame*
 
     COMMAND
-    header-key1::headerValue1
+    ¶header-key1::headerValue1
     header-key2::headerValue2
-
+    ¶bodybodybodybody
     bodybodybodybody
-    bodybodybodybody
-
-    ^@
+    ¶^@
 
 *Although useless, this is also a valid frame*
 
     COMMAND
-    header-key::headerValue
-
-    ^@
+    ¶header-key::headerValue
+    ¶^@
 
 *This is also a valid frame just that the message is not complete yet*
 
     COMMAND
-    header-key::headerValue
-
-    bodybodybodybody
+    ¶header-key::headerValue
+    ¶bodybodybodybody
     bodybodybodybody
 
 *But this is an **invalid** frame since headers are not present*
     COMMAND
-
+    ¶bodybodybodybody
     bodybodybodybody
-    bodybodybodybody
-
-    ^@
+    ¶^@
 
 #### Commands
 Valid commands are:
@@ -99,10 +95,9 @@ Connection initiation happens only from client
 *Client*
 
         CONNECT
-        client-id::23450-678-aedc
+        ¶client-id::23450-678-aedc
         client-passcode::Password@123
-
-        ^@
+        ¶^@
  NOTES:
  - The headers client-id, client-passcode should be used for authentication on the server
  - Omit those optional headers if no authentication is needed
@@ -110,7 +105,7 @@ Connection initiation happens only from client
 *Server*
 
         CONNECTED
-        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
         session-expiry::Tue, 01 Jun 2017 21:47:38 GMT
 NOTES:
  - session-id can be anything unqiue that an active server could generate to identify a connection session. This is a named alias for client connection handler
@@ -126,7 +121,7 @@ Client can request server to gracefully terminate the session
 *Client*
 
         DISCONNECT
-        session-id::35a4cf3a-0a75-414b-81e8-69b9b4075c4b
+        ¶session-id::35a4cf3a-0a75-414b-81e8-69b9b4075c4b
 
 NOTES:
  - session-id is passed to request Server to disconnect the client
@@ -138,7 +133,7 @@ NOTES:
  *Client* / *Server*
 
         DISCONNECTING
-        session-id::abcdef123456@#
+        ¶session-id::abcdef123456@#
 
  NOTES:
   - This could be an ugly termination of connection
@@ -166,57 +161,47 @@ Sending a response:
 *Peer*
 
         MESSAGE
-        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
         msg-id::000001
-
-        Hola
-
-        ^@
+        ¶Hola
+        ¶^@
 
 *Other peer*
 
         MESSAGE
-        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
         ref-msg-id::000001
-
-        Mundo!!!
-
-        ^@
+        ¶Mundo!!!
+        ¶^@
 
 Sending an acknowledgement is no different than sending a response 
 
 *Peer*
 
         MESSAGE
-        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
         msg-id::123123
-
-        Hello
-
-        ^@
+        ¶Hello
+        ¶^@
 
 *Other peer*
 
         MESSAGE
-        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
         ref-msg-id::123123
-
-        OK
-
-        ^@
+        ¶OK
+        ¶^@
 
 Send-only messages
 
 *Client/Server*
 
         MESSAGE
-        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
         msg-id::888999
         send-only::yes
-
-        OK
-
-        ^@
+        ¶OK
+        ¶^@
 
 NOTES:
  - message-id or ref-message-id header should be present on every message 
@@ -235,38 +220,34 @@ reaching the message size limit marks the end of the message
 
 *Frame1*
         MESSAGE
-        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
         msg-id::123456
         msg-more::yes
-
-        This is first part of the message. Second
+        ¶This is first part of the message. Second
         part 
 
 *Frame2*
         MESSAGE
-        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
         msg-id::123456
         msg-more::yes
-
-        is on the way. See I can have ^@ within the
-        message but shouldn't precede with two CR-LFs.
+        ¶is on the way. See I can have ^@ within the
+        message but shouldn't precede with delimieter.
         Finally the third
 
 *Frame3*
         MESSAGE
-        session-id::NaTPOgp1QUuB6Gm5tAdcSw
+        ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
         msg-id::123456
-
-        part marks the end of the
+        ¶part marks the end of the
         message
-
-        ^@
+        ¶^@
 
 The peeer that receives the frames should accumulate them to form a complete message.<br>
 The message body formed by the peer should read as follows:
         This is first part of the message. Second
         part is on the way. See I can have ^@ within the
-        message but shouldn't precede with two CR-LFs.
+        message but shouldn't precede with delimiter.
         Finally the thirdpart marks the end of the
         message
 
@@ -284,17 +265,15 @@ The size includes all the command, headers, body and the null sections of every 
 In this size limit case, the message that is formed by the peer from the above example looks like 
 
     MESSAGE
-    session-id::NaTPOgp1QUuB6Gm5tAdcSw
+    ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
     msg-id::123456
     msg-more::yes
-
-    This is first part of the message. Second
+    ¶This is first part of the message. Second
     part MESSAGE
-    session-id::NaTPOgp1QUuB6Gm5tAdcSw
+    ¶session-id::NaTPOgp1QUuB6Gm5tAdcSw
     msg-id::123456
     msg-more::yes
-
-    is on the way. See I can have ^@ within the
+    ¶is on the way. See I can have ^@ within the
     message but shouldn't precede with two CR-LFs.
     Finally t
 
@@ -313,11 +292,9 @@ Unlike regular messages, the errror messages should be sent in a single frame
 *Example*
 
         ERROR
-        error-code::403
-
-        Access Forbidden
-
-        ^@
+        ¶error-code::403
+        ¶Access Forbidden
+        ¶^@
 
 NOTES:
  - There are no specific rules for the headers or message body incase of error frames.
